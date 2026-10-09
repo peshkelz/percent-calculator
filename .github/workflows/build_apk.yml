@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK and Deploy PWA
 
 on:
   push:
@@ -7,9 +7,12 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build Flutter APK
+    name: Build Flutter APK & Web PWA
     runs-on: ubuntu-latest
 
     steps:
@@ -29,7 +32,7 @@ jobs:
 
       - name: Generate Platform Files
         run: |
-          flutter create --org com.percentcalc --platforms=android .
+          flutter create --org com.percentcalc --platforms=android,web .
           rm -rf test
 
       - name: Get Dependencies
@@ -44,3 +47,20 @@ jobs:
           name: PercentCalculator-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 14
+
+      - name: Build Web PWA (Release)
+        run: flutter build web --release --base-href "/percent-calculator/"
+
+      - name: Upload Web PWA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PercentCalculator-Web-PWA
+          path: build/web
+          retention-days: 14
+
+      - name: Deploy PWA to GitHub Pages
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
