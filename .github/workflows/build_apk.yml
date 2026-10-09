@@ -28,7 +28,9 @@ jobs:
           channel: 'stable'
 
       - name: Generate Platform Files
-        run: flutter create --org com.percentcalc .
+        run: |
+          flutter create --org com.percentcalc --platforms=android .
+          rm -rf test
 
       - name: Get Dependencies
         run: flutter pub get
